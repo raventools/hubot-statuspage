@@ -9,6 +9,7 @@ Interaction with the StatusPage.io API to open and update incidents, change comp
 * Register the two values as environment variables when starting your bot (as usual with Hubot scripts).
  * `export HUBOT_STATUS_PAGE_ORGANIZATION=organization_for_status_page`
  * `export HUBOT_STATUS_PAGE_TOKEN=token_for_status_page`
+ * `export HUBOT_STATUS_PAGE_TWITTER_ENABLED=t_or_f`
 
 If you are using Heroku to host your bot, replace `export ...` with `heroku set:config ...`.
 
