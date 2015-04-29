@@ -2,8 +2,10 @@
 #   Interaction with the StatusPage.io API to open and update incidents, change component status.
 #
 # Configuration:
-#   HUBOT_STATUS_PAGE_ORGANIZATION
-#   HUBOT_STATUS_PAGE_TOKEN
+#   HUBOT_STATUS_PAGE_ORGANIZATION - Required
+#   HUBOT_STATUS_PAGE_TOKEN - Required
+#   HUBOT_STATUS_PAGE_TWITTER_ENABLED - Optional: 't' or 'f'
+#   HUBOT_STATUS_PAGE_SHOW_WORKING - Optional: '1' or nothing
 #
 # Commands:
 #   hubot status? - Display an overall status of all components
@@ -14,7 +16,8 @@
 #   hubot status update <status> <message> - Update the latest open incident with the specified status and message.
 #
 # Author:
-#   roidrage
+#   roidrage, raventools
+
 module.exports = (robot) ->
   baseUrl = "https://api.statuspage.io/v0/organizations/#{process.env.HUBOT_STATUS_PAGE_ORGANIZATION}"
   authHeader = Authorization: "OAuth #{process.env.HUBOT_STATUS_PAGE_TOKEN}"
@@ -22,6 +25,11 @@ module.exports = (robot) ->
     degraded: 'degraded performance',
     major: 'major outage',
     partial: 'partial outage'
+
+  if process.env.HUBOT_STATUS_PAGE_TWITTER_ENABLED == 't'
+    send_twitter_update = 't'
+  else
+    send_twitter_update = 'f'
 
   robot.respond /(?:status|statuspage) incidents\??/i, (msg) ->
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
@@ -54,7 +62,7 @@ module.exports = (robot) ->
           incident =
             status: msg.match[1]
             message: msg.match[2]
-            wants_twitter_update: 't'
+            wants_twitter_update: send_twitter_update
           params =
             incident: incident
           msg.http("#{baseUrl}/incidents/#{incidentId}.json").headers(authHeader).patch(JSON.stringify params) (err, res, body) ->
@@ -73,7 +81,7 @@ module.exports = (robot) ->
 
     incident =
       status: msg.match[1]
-      wants_twitter_update: "t"
+      wants_twitter_update: send_twitter_update
       message: message
       name: name
     params = {incident: incident}
@@ -88,17 +96,23 @@ module.exports = (robot) ->
 
   robot.respond /(?:status|statuspage)\?$/i, (msg) ->
     msg.http("#{baseUrl}/components.json")
-     .headers(authHeader)
-     .get() (err, res, body) ->
-       components = JSON.parse body
-       broken_components = components.filter (component) ->
-         component.status != 'operational'
-       if broken_components.length == 0
-         msg.send "All systems operational!"
-       else
-         msg.send "There are currently #{broken_components.length} components in a degraded state"
-       msg.send ("#{component.name}: #{component.status.replace(/_/g, " ")}" for component in components).join("\n") + "\n"
-
+      .headers(authHeader)
+      .get() (err, res, body) ->
+        components = JSON.parse body
+        working_components = components.filter (component) ->
+          component.status == 'operational'
+        broken_components = components.filter (component) ->
+          component.status != 'operational'
+        if broken_components.length == 0
+          msg.send "All systems operational!"
+        else
+          msg.send "There are currently #{broken_components.length} components in a degraded state"
+        if broken_components.length > 0
+          msg.send "\nBroken Components:\n-------------\n"
+          msg.send ("#{component.name}: {component.status.replace(/_/g, ' ')}" for component in broken_components).join("\n") + "\n"
+        if working_components.length > 0 && process.env.HUBOT_STATUS_PAGE_SHOW_WORKING == '1'
+          msg.send "\nWorking Components:\n-------------\n"
+          msg.send ("#{component.name}" for component in working_components).join("\n") + "\n"
 
   robot.respond /(?:status|statuspage) ((?!(incidents|open|update|resolve|create))(\S ?)+)\?$/i, (msg) ->
     msg.http("#{baseUrl}/components.json")
