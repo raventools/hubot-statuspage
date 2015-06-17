@@ -109,7 +109,7 @@ module.exports = (robot) ->
           msg.send "There are currently #{broken_components.length} components in a degraded state"
         if broken_components.length > 0
           msg.send "\nBroken Components:\n-------------\n"
-          msg.send ("#{component.name}: {component.status.replace(/_/g, ' ')}" for component in broken_components).join("\n") + "\n"
+          msg.send ("#{component.name}: #{component.status.replace(/_/g, ' ')}" for component in broken_components).join("\n") + "\n"
         if working_components.length > 0 && process.env.HUBOT_STATUS_PAGE_SHOW_WORKING == '1'
           msg.send "\nWorking Components:\n-------------\n"
           msg.send ("#{component.name}" for component in working_components).join("\n") + "\n"
