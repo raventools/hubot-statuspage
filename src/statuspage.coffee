@@ -2,7 +2,7 @@
 #   Interaction with the StatusPage.io API to open and update incidents, change component status.
 #
 # Configuration:
-#   HUBOT_STATUS_PAGE_ORGANIZATION - Required
+#   HUBOT_STATUS_PAGE_ID - Required
 #   HUBOT_STATUS_PAGE_TOKEN - Required
 #   HUBOT_STATUS_PAGE_TWITTER_ENABLED - Optional: 't' or 'f'
 #   HUBOT_STATUS_PAGE_SHOW_WORKING - Optional: '1' or nothing
@@ -19,7 +19,7 @@
 #   roidrage, raventools
 
 module.exports = (robot) ->
-  baseUrl = "https://api.statuspage.io/v0/organizations/#{process.env.HUBOT_STATUS_PAGE_ORGANIZATION}"
+  baseUrl = "https://api.statuspage.io/v1/pages/#{process.env.HUBOT_STATUS_PAGE_ID}"
   authHeader = Authorization: "OAuth #{process.env.HUBOT_STATUS_PAGE_TOKEN}"
   componentStatuses =
     degraded: 'degraded performance',
