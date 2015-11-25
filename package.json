@@ -1,7 +1,7 @@
 {
   "name": "hubot-statuspage",
   "description": "Interaction with the StatusPage.io API to open and update incidents, change component status.",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "author": "travis-ci",
   "license": "MIT",
   "keywords": [
