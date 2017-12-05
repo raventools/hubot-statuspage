@@ -13,7 +13,8 @@
 #   hubot status <component> (degraded performance|partial outage|major outage|operational) - Set the status for a component. You can also use degraded, partial or major as shortcuts.
 #   hubot status incidents - Show all unresolved incidents
 #   hubot status open (investigating|identified|monitoring|resolved) <name>: <message> - Create a new incident using the specified name and message, setting it to the desired status (investigating, etc.). The message can be omitted
-#   hubot status update <status> <message> - Update the latest open incident with the specified status and message.
+#   hubot status update (investigating|identified|monitoring|resolved) <message> - Update the latest open incident with the specified status and message.
+#   hubot status update <incidentId> (investigating|identified|monitoring|resolved) <message> - Update a specific open incident with the specified status and message.
 #
 # Author:
 #   roidrage, raventools
