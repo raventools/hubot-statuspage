@@ -13,7 +13,8 @@
 #   hubot status <component> (degraded performance|partial outage|major outage|operational) - Set the status for a component. You can also use degraded, partial or major as shortcuts.
 #   hubot status incidents - Show all unresolved incidents
 #   hubot status open (investigating|identified|monitoring|resolved) <name>: <message> - Create a new incident using the specified name and message, setting it to the desired status (investigating, etc.). The message can be omitted
-#   hubot status update <status> <message> - Update the latest open incident with the specified status and message.
+#   hubot status update (investigating|identified|monitoring|resolved) <message> - Update the latest open incident with the specified status and message.
+#   hubot status update <incidentId> (investigating|identified|monitoring|resolved) <message> - Update a specific open incident with the specified status and message.
 #
 # Author:
 #   roidrage, raventools
@@ -45,7 +46,35 @@ module.exports = (robot) ->
           msg.send "Unresolved incidents:"
           for incident in unresolvedIncidents
             do (incident) ->
-              msg.send "#{incident.name} (Status: #{incident.status}, Created: #{incident.created_at})"
+              msg.send "#{incident.name} (Status: #{incident.status}, Created: #{incident.created_at}, id: #{incident.id})"
+
+  robot.respond /(?:status|statuspage) update (\S+) (investigating|identified|monitoring|resolved) (.+)/i, (msg) ->
+    msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
+      response = JSON.parse body
+      if response.error
+        msg.send "Error talking to StatusPage.io: #{response.error}"
+      else
+        unresolvedIncidents = response.filter (incident) ->
+          !incident.backfilled and incident.status != "resolved" and incident.status != "postmortem" and incident.status != "completed" and incident.status != "scheduled"
+        if unresolvedIncidents.length == 0
+          msg.send "Sorry, there are no unresolved incidents."
+        else
+          incidentId = msg.match[1]
+          incident =
+            status: msg.match[2]
+            message: msg.match[3]
+            wants_twitter_update: send_twitter_update
+          params =
+            incident: incident
+          msg.http("#{baseUrl}/incidents/#{incidentId}.json").headers(authHeader).patch(JSON.stringify params) (err, res, body) ->
+            response = JSON.parse body
+            for unresolvedIncident, index in unresolvedIncidents
+              if unresolvedIncident.id == incidentId
+                unresolvedIncidentIndex = index
+            if response.error
+              msg.send "Error updating incident #{unresolvedIncidents[unresolvedIncidentIndex].name}: #{response.error}"
+            else
+              msg.send "Updated incident \"#{unresolvedIncidents[unresolvedIncidentIndex].name}\""
 
   robot.respond /(?:status|statuspage) update (investigating|identified|monitoring|resolved) (.+)/i, (msg) ->
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
